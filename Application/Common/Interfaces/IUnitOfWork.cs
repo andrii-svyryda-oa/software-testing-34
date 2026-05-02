@@ -7,4 +7,10 @@ namespace Application.Common.Interfaces;
 public interface IUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Discards any tracked changes (e.g. after a concurrency conflict) so the next
+    /// repository load returns fresh state.
+    /// </summary>
+    Task DiscardTrackedChangesAsync(CancellationToken cancellationToken);
 }

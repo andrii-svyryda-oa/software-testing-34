@@ -1,6 +1,5 @@
 using Application.Common;
 using Application.Common.Interfaces;
-using Application.Common.Interfaces.Queries;
 using Application.Common.Interfaces.Repositories;
 using Application.Customers.Exceptions;
 using Domain.Customers;
@@ -26,7 +25,6 @@ public record ExpirePointsCommand : IRequest<Result<int, CustomerException>>
 /// because consumed/expired transactions have <c>Remaining = 0</c> and are skipped.
 /// </summary>
 public class ExpirePointsCommandHandler(
-    ICustomerQueries customerQueries,
     ICustomerRepository customerRepository,
     IPointTransactionRepository transactionRepository,
     IUnitOfWork unitOfWork)
@@ -36,7 +34,7 @@ public class ExpirePointsCommandHandler(
         ExpirePointsCommand request, CancellationToken cancellationToken)
     {
         var customerId = new CustomerId(request.CustomerId);
-        var maybe = await customerQueries.GetById(customerId, cancellationToken);
+        var maybe = await customerRepository.GetById(customerId, cancellationToken);
         if (!maybe.HasValue)
             return new CustomerNotFoundException(customerId);
 

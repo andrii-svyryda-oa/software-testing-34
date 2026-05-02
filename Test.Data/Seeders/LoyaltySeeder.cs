@@ -113,12 +113,13 @@ public static class LoyaltySeeder
         Faker faker, List<Customer> customers, int targetCount)
     {
         var txs = new List<PointTransaction>(targetCount);
-        var perCustomer = Math.Max(1, targetCount / customers.Count);
+        // Aim slightly above target so unfulfilled redeem/expire iterations (which break
+        // early once a customer's deposits are exhausted) still land us at >= targetCount.
+        var perCustomer = Math.Max(1, (int)Math.Ceiling(targetCount * 1.10 / customers.Count));
 
         foreach (var customer in customers)
         {
-            // Slight per-customer variance so we don't end up with everyone at exactly perCustomer.
-            var thisCount = Math.Max(1, perCustomer + faker.Random.Int(-3, 3));
+            var thisCount = Math.Max(1, perCustomer + faker.Random.Int(-2, 2));
             var deposits = new List<PointTransaction>();
             var depositCount = (int)Math.Round(thisCount * 0.70);
             var redeemCount = (int)Math.Round(thisCount * 0.25);

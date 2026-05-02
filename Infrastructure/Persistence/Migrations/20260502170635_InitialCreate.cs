@@ -23,6 +23,8 @@ namespace Infrastructure.Persistence.Migrations
                     total_points = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     total_earned_points = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     join_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
+                    // xmin is a Postgres system column; configured as a shadow concurrency
+                    // token in EF, intentionally omitted from the schema.
                 },
                 constraints: table =>
                 {
@@ -39,8 +41,9 @@ namespace Infrastructure.Persistence.Migrations
                     points_cost = table.Column<int>(type: "integer", nullable: false),
                     category = table.Column<string>(type: "varchar(50)", nullable: false),
                     stock_quantity = table.Column<int>(type: "integer", nullable: false),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    // xmin is a Postgres system column; configured as a shadow concurrency
+                    // token in EF, intentionally omitted from the schema.
                 },
                 constraints: table =>
                 {

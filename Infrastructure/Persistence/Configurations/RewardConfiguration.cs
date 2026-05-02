@@ -19,10 +19,10 @@ public class RewardConfiguration : IEntityTypeConfiguration<Reward>
         builder.Property(x => x.StockQuantity).HasColumnType("integer").IsRequired();
         builder.Property(x => x.IsActive).HasColumnType("boolean").HasDefaultValue(true);
 
-        builder.Property<uint>("xmin")
-            .HasColumnType("xid")
-            .ValueGeneratedOnAddOrUpdate()
-            .IsConcurrencyToken();
+        // Map the Postgres system column `xmin` as a shadow concurrency token.
+        // Marking it `IsRowVersion()` lets EF know the value is database-generated and that
+        // the column already exists, so no migration is emitted for it.
+        builder.Property<uint>("xmin").IsRowVersion();
 
         builder.HasIndex(x => x.Category);
         builder.HasIndex(x => x.IsActive);

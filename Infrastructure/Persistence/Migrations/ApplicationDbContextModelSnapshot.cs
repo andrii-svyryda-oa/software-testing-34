@@ -66,6 +66,12 @@ namespace Infrastructure.Persistence.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("total_points");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_customers");
 

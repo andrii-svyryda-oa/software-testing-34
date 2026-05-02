@@ -1,7 +1,6 @@
 using Domain.Customers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
 namespace Infrastructure.Persistence.Configurations;
 
 public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
@@ -25,5 +24,9 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .IsRequired()
             .HasConversion(x => x.ToString(), x => Enum.Parse<TierLevel>(x))
             .HasColumnType("varchar(50)");
+
+        // Optimistic concurrency via Postgres' system column `xmin` so concurrent
+        // earn/redeem/expire operations on the same customer detect lost-update conflicts.
+        builder.Property<uint>("xmin").IsRowVersion();
     }
 }
