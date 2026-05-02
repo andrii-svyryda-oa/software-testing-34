@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: build + test (.NET 8 / Postgres via Testcontainers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore SoftwareTesting.sln
+
+      - name: Build
+        run: dotnet build SoftwareTesting.sln -c Release --no-restore /warnaserror
+
+      - name: Unit tests
+        run: |
+          dotnet test Api.Tests.Unit/Api.Tests.Unit.csproj \
+            -c Release --no-build \
+            --logger "trx;LogFileName=unit.trx" \
+            --logger "GitHubActions;summary.includePassedTests=false" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/unit
+
+      - name: Integration + database tests
+        run: |
+          dotnet test Api.Tests.Integrations/Api.Tests.Integrations.csproj \
+            -c Release --no-build \
+            --logger "trx;LogFileName=integrations.trx" \
+            --logger "GitHubActions;summary.includePassedTests=false" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/integrations
+
+      - name: Merge coverage and produce summary
+        if: always()
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.3.11
+        with:
+          reports: 'TestResults/**/coverage.cobertura.xml'
+          targetdir: 'TestResults/coverage-report'
+          reporttypes: 'HtmlInline;Cobertura;MarkdownSummaryGithub'
+
+      - name: Append coverage summary to job summary
+        if: always()
+        run: |
+          if [ -f TestResults/coverage-report/SummaryGithub.md ]; then
+            cat TestResults/coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**/*.trx
+            TestResults/coverage-report/**
+
+      - name: Fail if coverage below threshold
+        if: success()
+        # Soft global gate at 80% line coverage across Domain + Application + Infrastructure + Api.
+        run: |
+          line_rate=$(grep -oP 'line-rate="\K[^"]+' TestResults/coverage-report/Cobertura.xml | head -1)
+          pct=$(awk "BEGIN {print $line_rate * 100}")
+          echo "Total line coverage: $pct%"
+          awk "BEGIN { exit !($line_rate >= 0.80) }"
