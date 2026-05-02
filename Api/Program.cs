@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Api;
 using Api.Modules;
 using Api.Modules.Errors;
 using Application;
@@ -26,6 +27,13 @@ if (app.Environment.IsDevelopment())
 }
 
 await app.InitialiseDb();
+
+if (args.Contains("--seed"))
+{
+    await PerfSeed.RunAsync(app, args);
+    return;
+}
+
 app.MapControllers();
 app.Run();
 

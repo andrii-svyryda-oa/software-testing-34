@@ -20,6 +20,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <!-- Test.Data is referenced for the seed CLI mode used by the k6 perf scripts.
+         It is otherwise not exercised by the runtime. -->
+    <ProjectReference Include="..\Test.Data\Test.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>
