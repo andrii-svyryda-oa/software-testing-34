@@ -8,12 +8,29 @@ namespace Infrastructure.Persistence.Repositories;
 
 public class RewardRepository(ApplicationDbContext context) : IRewardRepository, IRewardQueries
 {
-    public async Task<Option<Reward>> GetById(RewardId id, CancellationToken cancellationToken)
-    {
-        var entity = await context.Rewards
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    /// <summary>
+    /// Write-side <c>GetById</c>: returns a tracked entity so that subsequent calls to
+    /// <see cref="Update"/> + <see cref="ApplicationDbContext.SaveChangesAsync(CancellationToken)"/>
+    /// preserve the original <c>xmin</c> concurrency token.
+    /// </summary>
+    Task<Option<Reward>> IRewardRepository.GetById(RewardId id, CancellationToken cancellationToken)
+        => GetByIdTracked(id, cancellationToken);
 
+    /// <summary>
+    /// Read-side <c>GetById</c>: untracked.
+    /// </summary>
+    Task<Option<Reward>> IRewardQueries.GetById(RewardId id, CancellationToken cancellationToken)
+        => GetByIdAsNoTracking(id, cancellationToken);
+
+    private async Task<Option<Reward>> GetByIdTracked(RewardId id, CancellationToken ct)
+    {
+        var entity = await context.Rewards.FirstOrDefaultAsync(x => x.Id == id, ct);
+        return entity is null ? Option.None<Reward>() : Option.Some(entity);
+    }
+
+    private async Task<Option<Reward>> GetByIdAsNoTracking(RewardId id, CancellationToken ct)
+    {
+        var entity = await context.Rewards.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         return entity is null ? Option.None<Reward>() : Option.Some(entity);
     }
 
@@ -34,7 +51,13 @@ public class RewardRepository(ApplicationDbContext context) : IRewardRepository,
 
     public Reward Update(Reward reward)
     {
-        context.Rewards.Update(reward);
+        // Tracked entities are already in Modified state after domain mutations; calling
+        // Update is a no-op for them and ensures detached entities still get persisted.
+        var entry = context.Entry(reward);
+        if (entry.State == EntityState.Detached)
+        {
+            context.Rewards.Update(reward);
+        }
         return reward;
     }
 }

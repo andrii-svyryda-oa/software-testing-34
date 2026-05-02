@@ -26,10 +26,11 @@ public class GetCustomerHistoryQueryHandler(
         var skip = Math.Max(0, request.Skip);
         var take = Math.Clamp(request.Take, 1, 100);
 
-        var dataTask = transactionQueries.GetHistoryFor(customerId, skip, take, cancellationToken);
-        var countTask = transactionQueries.CountFor(customerId, cancellationToken);
-        await Task.WhenAll(dataTask, countTask);
+        // Run sequentially: the underlying DbContext is not thread-safe, so concurrent
+        // queries on the same scope throw "second operation started" errors.
+        var data = await transactionQueries.GetHistoryFor(customerId, skip, take, cancellationToken);
+        var total = await transactionQueries.CountFor(customerId, cancellationToken);
 
-        return new PaginatedResult<PointTransaction>(dataTask.Result, countTask.Result);
+        return new PaginatedResult<PointTransaction>(data, total);
     }
 }

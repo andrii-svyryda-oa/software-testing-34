@@ -14,6 +14,20 @@ namespace Tests.Common;
 
 public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    static IntegrationTestWebFactory()
+    {
+        // Workaround for Testcontainers .NET on Windows: when the active Docker context endpoint
+        // is stored as `npipe:////./pipe/docker_engine` (Docker Desktop default), Docker.DotNet's
+        // URI parser drops the host and the static cctor of TestcontainersSettings explodes.
+        // Setting DOCKER_HOST to the canonical 3-slash form before any Testcontainers type loads
+        // bypasses the broken context discovery.
+        if (OperatingSystem.IsWindows()
+            && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOCKER_HOST")))
+        {
+            Environment.SetEnvironmentVariable("DOCKER_HOST", "npipe://./pipe/docker_engine");
+        }
+    }
+
     private readonly PostgreSqlContainer _db = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
         .WithDatabase("loyalty_test")
