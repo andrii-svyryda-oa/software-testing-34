@@ -3,6 +3,10 @@ using Domain.PointTransactions;
 
 namespace Application.Common.Interfaces.Repositories;
 
+/// <summary>
+/// Write-side repository for <see cref="PointTransaction"/>. <c>Add</c>/<c>AddMany</c> stage
+/// changes; callers persist via <see cref="Application.Common.Interfaces.IUnitOfWork.SaveChangesAsync"/>.
+/// </summary>
 public interface IPointTransactionRepository
 {
     Task<PointTransaction> Add(PointTransaction transaction, CancellationToken cancellationToken);
