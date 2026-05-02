@@ -5,6 +5,17 @@ Two k6 scripts targeting the most performance-sensitive endpoints:
 - `balance-load.js` — load test on the point-balance lookup (`GET /api/customers/{id}`).
 - `redeem-stress.js` — stress test on concurrent redemption against a scarce reward.
 
+## API port
+
+The API always runs on **`http://localhost:5000`** (HTTP only). This is hard-wired in:
+
+- `Api/appsettings.json` — `"Urls": "http://localhost:5000"`.
+- `Api/Properties/launchSettings.json` — `applicationUrl: http://localhost:5000`.
+- `perf/docker-compose.perf.yml` — `ASPNETCORE_URLS=http://+:5000` and `ports: ['5000:5000']`.
+
+All commands and k6 scripts in this README assume that fixed port. If port 5000 is busy, free
+it before starting the API rather than overriding the URL piecemeal.
+
 ## Prerequisites
 
 - Docker (Docker Desktop on Windows / Docker Engine on Linux).
@@ -38,7 +49,7 @@ Two k6 scripts targeting the most performance-sensitive endpoints:
 
    ```bash
    k6 run -e API_URL=http://localhost:5000 \
-          -e IDS_FILE=./perf/customer-ids.json \
+          -e IDS_FILE=../Api/perf/customer-ids.json \
           perf/balance-load.js
    ```
 
@@ -46,7 +57,7 @@ Two k6 scripts targeting the most performance-sensitive endpoints:
 
    ```bash
    k6 run -e API_URL=http://localhost:5000 \
-          -e RICH_IDS_FILE=./perf/rich-customer-ids.json \
+          -e RICH_IDS_FILE=../Api/perf/rich-customer-ids.json \
           -e REWARD_ID=$(cat perf/scarce-reward-id.txt | tr -d '\r\n ') \
           perf/redeem-stress.js
    ```
