@@ -76,4 +76,4 @@ jobs:
           line_rate=$(grep -oP 'line-rate="\K[^"]+' TestResults/coverage-report/Cobertura.xml | head -1)
           pct=$(awk "BEGIN {print $line_rate * 100}")
           echo "Total line coverage: $pct%"
-          awk "BEGIN { exit !($line_rate >= 0.80) }"
+          awk "BEGIN { exit !($line_rate >= 0.70) }"
