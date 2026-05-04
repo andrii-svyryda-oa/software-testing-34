@@ -76,6 +76,13 @@ public static class PerfSeed
         await File.WriteAllTextAsync(Path.Combine(outputDirectory, "rich-customer-ids.json"),
             JsonSerializer.Serialize(richCustomerIds));
 
+        // Dedicated file with ONLY the GUID (no trailing newline) so shell substitutions like
+        // `$(< Api/perf/scarce-reward-id.txt)` produce a clean argv value. Writing to a file
+        // (rather than relying on stdout redirection) avoids contamination from `dotnet run`
+        // build output and EF Core console logging.
+        await File.WriteAllTextAsync(Path.Combine(outputDirectory, "scarce-reward-id.txt"),
+            scarceReward.Id.Value.ToString());
+
         Console.Out.WriteLine(scarceReward.Id.Value);
         await Console.Out.FlushAsync();
 
